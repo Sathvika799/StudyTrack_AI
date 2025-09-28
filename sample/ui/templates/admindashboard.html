@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Track AI - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 300ms ease-out;
+        }
+        .modal-leave-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 200ms ease-in;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="bg-white w-64 p-6 shadow-lg">
+        <div class="flex items-center gap-3 mb-10">
+            <i class="ph ph-shield-check text-3xl text-indigo-600"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Admin Panel</h1>
+        </div>
+        <nav>
+            <ul class="space-y-2">
+                <li><a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-indigo-100 text-indigo-700 font-semibold"><i class="ph-bold ph-users text-xl"></i><span>Student Courses</span></a></li>
+                <li><a href="#" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100"><i class="ph-bold ph-chart-bar text-xl"></i><span>Analytics</span></a></li>
+                <li><a href="{% url 'logout' %}" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100"><i class="ph-bold ph-sign-out text-xl"></i><span>Logout</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-700">Student Course Management</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600">Admin User</span>
+                <img src="https://placehold.co/40x40/E2E8F0/4A5568?text=AD" alt="Admin Avatar" class="w-10 h-10 rounded-full">
+            </div>
+        </header>
+
+        <!-- Table Content -->
+        <main class="flex-1 p-8 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">All Course Records</h2>
+                <button id="open-modal-btn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200 flex items-center gap-2">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>New Student Course</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-2xl shadow-md overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Student Name</th>
+                            <th scope="col" class="px-6 py-3">Course Name</th>
+                            <th scope="col" class="px-6 py-3">Start Date</th>
+                            <th scope="col" class="px-6 py-3">End Date</th>
+                            <th scope="col" class="px-6 py-3">Hours Spent</th>
+                            <th scope="col" class="px-6 py-3">Completion %</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- DYNAMIC DATA: Loop through courses from the database -->
+                        {% for course in courses %}
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900">{{ course.student.username }}</td>
+                            <td class="px-6 py-4">{{ course.course_name }}</td>
+                            <td class="px-6 py-4">{{ course.start_date|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4">{{ course.end_date|date:"M d, Y"|default:"-" }}</td>
+                            <td class="px-6 py-4">{{ course.hours_spent }} hours</td>
+                            <td class="px-6 py-4">{{ course.completion_percentage }}%</td>
+                            <td class="px-6 py-4">
+                                {% if course.status == 'Completed' %}
+                                <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Completed</span>
+                                {% else %}
+                                <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">In Progress</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-gray-500">No student course records found. Add one to get started!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Adding New Student Course -->
+    <div id="add-course-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div id="modal-content" class="bg-white p-8 md:p-10 rounded-2xl shadow-lg w-full max-w-2xl modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                 <h1 class="text-3xl font-bold text-gray-800">Add New Student Course</h1>
+                 <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800">
+                     <i class="ph-bold ph-x text-2xl"></i>
+                 </button>
+            </div>
+            
+            <form id="add-course-form" method="POST" class="space-y-6">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="student_name" class="block text-sm font-medium text-gray-700 mb-1">Student Username</label>
+                        <input type="text" name="student_name" id="student_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                     <div>
+                        <label for="course_name" class="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
+                        <input type="text" name="course_name" id="course_name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date (Optional)</label>
+                        <input type="date" name="end_date" id="end_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="hours_spent" class="block text-sm font-medium text-gray-700 mb-1">Hours Spent</label>
+                        <input type="number" name="hours_spent" id="hours_spent" value="0" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="completion_percentage" class="block text-sm font-medium text-gray-700 mb-1">Completion %</label>
+                        <input type="number" name="completion_percentage" id="completion_percentage" value="0" min="0" max="100" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                            <option>Not Started</option>
+                            <option selected>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-4 gap-4">
+                     <button type="button" id="cancel-btn" class="text-gray-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100">Cancel</button>
+                     <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Save Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('add-course-modal');
+        const modalContent = document.getElementById('modal-content');
+        const openBtn = document.getElementById('open-modal-btn');
+        const closeBtn = document.getElementById('close-modal-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const addCourseForm = document.getElementById('add-course-form');
+
+        const openModal = () => {
+            addCourseForm.reset();
+            modal.classList.remove('hidden');
+            setTimeout(() => modalContent.classList.add('modal-enter-active'), 10);
+        };
+
+        const closeModal = () => {
+            modalContent.classList.remove('modal-enter-active');
+            modalContent.classList.add('modal-leave-active');
+            setTimeout(() => {
+                modalContent.classList.remove('modal-leave-active');
+                modal.classList.add('hidden');
+            }, 200);
+        };
+
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        addCourseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addCourseForm);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            try {
+                // UPDATED: Post to the dynamic URL for the admin dashboard itself.
+                const response = await fetch("{% url 'admindashboard' %}", {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Record saved successfully!');
+                    window.location.reload();
+                } else {
+                    alert(`Error: ${result.message || 'There was a problem saving the data.'}`);
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                alert('A network error occurred. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

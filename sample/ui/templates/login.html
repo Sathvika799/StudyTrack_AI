@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log-in</title>
+    <style>
+        body {
+            font-family: Arial;
+            background-image: url('https://plus.unsplash.com/premium_photo-1681843672359-f51f0cefe0ca?q=80&w=3139&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .login-container {
+            position: relative;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 2rem 2.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 320px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 1.5rem;
+            color: #4B3832;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #5D4940;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 5px;
+            box-sizing: border-box; 
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #A0522D; /* Student Button Color */
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease; 
+        }
+
+        button:hover {
+            background-color: #8B4513;
+        }
+        
+        .admin-button {
+            background-color: #5D4940; /* Admin Button Color */
+            margin-top: 0.75rem;
+        }
+        
+        .admin-button:hover {
+             background-color: #4B3832;
+        }
+
+        p {
+            margin-top: 1.5rem;
+            color: #666;
+        }
+
+        a {
+            color: #A0522D;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .forgot-password {
+            display: block; 
+            text-align: right; 
+            margin-top: -10px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <div class="login-container">
+        <h1>Log-in</h1>
+        {% if messages %}
+            <div style="width: 100%; text-align: center;">
+                {% for message in messages %}
+                    <p style="color: red; font-weight: bold; margin-top: 0; margin-bottom: 1rem;">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <a href="#" class="forgot-password">Forgot Password?</a>
+            
+            <!-- NEW: Two separate buttons for each role -->
+            <button type="submit" name="role" value="student">Login as Student</button>
+            <button type="submit" name="role" value="admin" class="admin-button">Login as Admin</button>
+        </form>
+
+        <p>Don't have an Account?</p>
+        <a href="/register">Click to Register</a>
+    </div>
+</body>
+</html>
