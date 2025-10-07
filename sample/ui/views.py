@@ -1,11 +1,14 @@
+# ui/views.py
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 
-from .models import userdetails, studentcourse
+# UPDATED: Import UserProfile instead of userdetails
+from .models import UserProfile, studentcourse
 
 
 # Create your views here.
@@ -16,30 +19,27 @@ def log_in(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        role = request.POST.get('role') # This comes from the button clicked
+        role = request.POST.get('role')
 
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Check if the role submitted matches the user's status
             if role == 'admin' and user.is_staff:
                 auth_login(request, user)
-                return redirect('admindashboard') # Redirect to admin dashboard URL
+                return redirect('admindashboard')
             elif role == 'student' and not user.is_staff:
                 auth_login(request, user)
-                return redirect('studentdashboard') # Redirect to student dashboard URL
+                return redirect('userdashboard')
             else:
-                # User exists but is trying to log into the wrong portal
                 messages.error(request, 'Invalid role for this account.')
                 return redirect('login')
         else:
-            # Invalid credentials
             messages.error(request, 'Invalid username or password.')
             return redirect('login')
     
-    # For a GET request, just show the login page
     return render(request, 'login.html')
 
+# === THIS ENTIRE FUNCTION IS NOW CORRECTED ===
 def register(request):
     if request.method == "POST":
         username = request.POST['username']
@@ -52,30 +52,42 @@ def register(request):
             messages.error(request, "Passwords do not match.")
             return render(request, 'register.html')
         
-        if userdetails.objects.filter(email=email).exists():
+        # Check against Django's User model if email exists
+        if User.objects.filter(email=email).exists():
             messages.error(request, "Email already registered. Please login.")
             return redirect('login')
         
-        if userdetails.objects.filter(username=username).exists():
+        # Check against Django's User model if username exists
+        if User.objects.filter(username=username).exists():
             messages.error(request, "Username already taken. Please choose another.")
             return render(request, 'register.html')
         
-        reg = userdetails(
-            username=username,
-            fullname=fullname,
-            email=email,
-            password=password,
-            confirmpassword=confirmpassword
-        )
-        reg.save()
-        messages.success(request, "Registration Successfull! Please login.")
+        # 1. Create the user with Django's secure method
+        # This handles password hashing automatically.
+        user = User.objects.create_user(username=username, email=email, password=password)
+        user.save()
+
+        # 2. Create the linked UserProfile with the extra fullname field
+        profile = UserProfile(user=user, fullname=fullname)
+        profile.save()
+        
+        messages.success(request, "Registration Successful! Please login.")
         return redirect('login')
+    
     return render(request, 'register.html')
 
+@login_required
 def userdashboard(request):
+    
     return render(request, 'userdashboard.html')
 
+@login_required
 def admindashboard(request):
+    # This check ensures only admins can access the admin dashboard
+    if not request.user.is_staff:
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('login')
+
     if request.method == 'POST':
         student_username = request.POST.get('student_name')
         try:
@@ -95,16 +107,12 @@ def admindashboard(request):
         new_course.save()
         return JsonResponse({'message': 'Course saved successfully!'}, status=201)
     
-    # For a GET request, fetch all courses and render the page
     all_courses = studentcourse.objects.all().order_by('-created_at')
     context = {'courses': all_courses}
     return render(request, 'admindashboard.html', context)
 
 
 def logout_view(request):
-    """
-    Logs the user out and redirects them to the login page.
-    """
     auth_logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('login')
