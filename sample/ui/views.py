@@ -78,8 +78,22 @@ def register(request):
 
 @login_required
 def userdashboard(request):
-    
-    return render(request, 'userdashboard.html')
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        profile = None
+
+    # Fetch courses that belong ONLY to the currently logged-in user (request.user)
+    ongoing_courses = studentcourse.objects.filter(student=request.user).exclude(status='Completed').order_by('start_date')
+    completed_courses = studentcourse.objects.filter(student=request.user, status='Completed').order_by('-end_date')
+
+    # Put all the data into a context dictionary to send to the template
+    context = {
+        'profile': profile,
+        'ongoing_courses': ongoing_courses,
+        'completed_courses': completed_courses,
+    }
+    return render(request, 'userdashboard.html', context)
 
 @login_required
 def admindashboard(request):

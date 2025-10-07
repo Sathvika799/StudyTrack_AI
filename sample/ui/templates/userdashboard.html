@@ -16,9 +16,9 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* A light, neutral background */
+            background-color: #f0f2f5;
         }
-        /* Custom scrollbar for a cleaner look */
+
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -32,7 +32,7 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #9ca3af;
         }
-        /* Style for the active nav link */
+
         .nav-link-active {
             background-color: #e0e7ff;
             color: #4f46e5;
@@ -96,7 +96,7 @@
             <button id="menu-toggle" class="md:hidden text-gray-600">
                 <i class="ph-bold ph-list text-2xl"></i>
             </button>
-            <h2 class="hidden md:block text-xl font-semibold text-gray-700">Welcome back, Vishal!</h2>
+            <h2 class="hidden md:block text-xl font-semibold text-gray-700">Welcome back, {{ profile.fullname }}!</h2>
             <div class="flex items-center gap-4">
                 <button class="text-gray-500 hover:text-gray-700">
                     <i class="ph ph-bell text-2xl"></i>
@@ -125,36 +125,20 @@
                     <div class="bg-white p-6 rounded-2xl shadow-md">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">My Courses</h3>
                         <div class="space-y-4">
+                            {% for course in ongoing_courses %}
                             <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
-                                <div class="p-3 bg-red-100 text-red-600 rounded-lg"><i class="ph ph-file-py text-xl"></i></div>
+                                <div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i class="ph ph-books text-xl"></i></div>
                                 <div class="flex-1">
-                                    <p class="font-semibold text-gray-700">Python</p>
+                                    <p class="font-semibold text-gray-700">{{ course.course_name }}</p>
                                     <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                                        <div class="bg-red-500 h-2.5 rounded-full" style="width: 75%"></div>
+                                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: {{ course.completion_percentage }}%"></div>
                                     </div>
                                 </div>
-                                <span class="font-medium text-gray-600">75%</span>
+                                <span class="font-medium text-gray-600">{{ course.completion_percentage }}%</span>
                             </div>
-                             <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
-                                <div class="p-3 bg-blue-100 text-blue-600 rounded-lg"><i class="ph ph-atom text-2xl"></i></div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-700">Introduction to AI</p>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                                        <div class="bg-blue-500 h-2.5 rounded-full" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                                <span class="font-medium text-gray-600">60%</span>
-                            </div>
-                            <div class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
-                                <div class="p-3 bg-green-100 text-green-600 rounded-lg"><i class="ph ph-code text-2xl"></i></div>
-                                <div class="flex-1">
-                                    <p class="font-semibold text-gray-700">Data Structures & Algorithms</p>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                                        <div class="bg-green-500 h-2.5 rounded-full" style="width: 85%"></div>
-                                    </div>
-                                </div>
-                                <span class="font-medium text-gray-600">85%</span>
-                            </div>
+                            {% empty %}
+                            <p class="text-gray-500">You have no ongoing courses.</p>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -186,7 +170,6 @@
                             </li>
                         </ul>
                     </div>
-
                     <div class="bg-white p-6 rounded-2xl shadow-md">
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">This Week's Study Goal</h3>
                         <div class="flex items-center justify-center space-x-4">
@@ -244,90 +227,37 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for course in ongoing_courses %}
                             <tr class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                     <div class="flex items-center gap-3">
-                                        <div class="p-2 bg-red-100 text-red-600 rounded-lg"><i class="ph ph-file-py text-xl"></i></i></div>
-                                        Python
+                                        <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="ph ph-books text-xl"></i></div>
+                                        {{ course.course_name }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">Aug 25, 2025</td>
-                                <td class="px-6 py-4">
-                                    <div>-</div>
-                                    <div class="text-xs text-gray-500"></div>
-                                </td>
-                                <td class="px-6 py-4">32 hours</td>
+                                <td class="px-6 py-4">{{ course.start_date|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4">{{ course.end_date|date:"M d, Y"|default:"-" }}</td>
+                                <td class="px-6 py-4">{{ course.hours_spent }} hours</td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-red-500 h-2.5 rounded-full" style="width: 75%"></div>
+                                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: {{ course.completion_percentage }}%"></div>
                                         </div>
-                                        <span>75%</span>
+                                        <span>{{ course.completion_percentage }}%</span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">In Progress</span>
+                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">{{ course.status }}</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <button class="font-medium text-indigo-600 hover:underline">View</button>
                                 </td>
                             </tr>
-                            <tr class="bg-white border-b hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i class="ph ph-atom text-xl"></i></div>
-                                        Introduction to AI
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">Aug 25, 2025</td>
-                                <td class="px-6 py-4">
-                                    <div>-</div>
-                                    <div class="text-xs text-gray-500"></div>
-                                </td>
-                                <td class="px-6 py-4">25 hours</td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: 60%"></div>
-                                        </div>
-                                        <span>60%</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">In Progress</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="font-medium text-indigo-600 hover:underline">View</button>
-                                </td>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-6 text-gray-500">No ongoing courses found.</td>
                             </tr>
-                            <tr class="bg-white hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2 bg-green-100 text-green-600 rounded-lg"><i class="ph ph-code text-xl"></i></div>
-                                        Data Structures & Algorithms
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">Aug 25, 2025</td>
-                                <td class="px-6 py-4">
-                                    <div>-</div>
-                                    <div class="text-xs text-gray-500"></div>
-                                </td>
-                                <td class="px-6 py-4">40 hours</td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-green-500 h-2.5 rounded-full" style="width: 85%"></div>
-                                        </div>
-                                        <span>85%</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">In Progress</span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="font-medium text-indigo-600 hover:underline">View</button>
-                                </td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -349,19 +279,17 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for course in completed_courses %}
                             <tr class="bg-white border-b hover:bg-gray-50">
                                 <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                                     <div class="flex items-center gap-3">
-                                        <div class="p-2 bg-purple-100 text-purple-600 rounded-lg"><i class="ph ph-file-py text-xl"></i></div>
-                                        Introdution to Python
+                                        <div class="p-2 bg-green-100 text-green-600 rounded-lg"><i class="ph ph-check-circle text-xl"></i></div>
+                                        {{ course.course_name }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">Jan 15, 2025</td>
-                                <td class="px-6 py-4">
-                                    <div>May 10, 2025</div>
-                                    <div class="text-xs text-gray-500">4 months ago</div>
-                                </td>
-                                <td class="px-6 py-4">55 hours</td>
+                                <td class="px-6 py-4">{{ course.start_date|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4">{{ course.end_date|date:"M d, Y" }}</td>
+                                <td class="px-6 py-4">{{ course.hours_spent }} hours</td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -377,6 +305,11 @@
                                     <button class="font-medium text-indigo-600 hover:underline">View</button>
                                 </td>
                             </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-6 text-gray-500">No completed courses yet.</td>
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
