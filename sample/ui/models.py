@@ -1,23 +1,17 @@
 # ui/models.py
 
 from django.db import models
-from django.contrib.auth.models import User # Import Django's built-in User model
+from django.contrib.auth.models import User
+from django.utils import timezone
 
-# This is now a "profile" model. It adds extra fields to Django's User model.
+# --- EXISTING MODELS ---
 class UserProfile(models.Model):
-    # This creates a one-to-one link with Django's User model.
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     fullname = models.CharField(max_length=100)
-    
-    # We no longer store username, email, or password here.
-    # Django's User model handles that securely.
-
     def __str__(self):
         return self.user.username
 
 class studentcourse(models.Model):
-    # This creates a many-to-one link to a User.
-    # One user can have many courses.
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     course_name = models.CharField(max_length=200)
     start_date = models.DateField()
@@ -26,19 +20,38 @@ class studentcourse(models.Model):
     completion_percentage = models.IntegerField(default=0)
     status = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         return f"{self.student.username} - {self.course_name}"
-    
-class Quiz(models.Model):
-    course = models.ForeignKey(studentcourse, on_delete=models.CASCADE, related_name='quizzes')
-    title = models.CharField(max_length=200)
-    due_date = models.DateTimeField()
-    completed = models.BooleanField(default=False)
+
+# --- NEW MODELS FOR AI-POWERED ADAPTIVE QUIZZES ---
+class GeneratedQuiz(models.Model):
+    DIFFICULTY_CHOICES = [
+        ('Basic', 'Basic'),
+        ('Intermediate', 'Intermediate'),
+        ('Advanced', 'Advanced'),
+    ]
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(studentcourse, on_delete=models.CASCADE)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default='Basic')
+    score = models.FloatField(null=True, blank=True) # Score as a percentage
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.title} for {self.course.course_name}"
+        return f"Quiz for {self.course.course_name} by {self.student.username} ({self.difficulty})"
 
-    def is_due_soon(self):
-        # Returns true if the quiz is due within the next 2 days
-        return timezone.now() <= self.due_date <= timezone.now() + timezone.timedelta(days=2)
+class Question(models.Model):
+    # Now links to a specific quiz attempt
+    quiz = models.ForeignKey(GeneratedQuiz, on_delete=models.CASCADE, related_name='questions')
+    text = models.CharField(max_length=1000) # Increased length for complex questions
+
+    def __str__(self):
+        return self.text
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.text

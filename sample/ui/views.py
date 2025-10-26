@@ -6,9 +6,11 @@ from django.contrib.auth import authenticate, login as auth_login, logout as aut
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from .ai_service import generate_quiz_from_ai
+from django.shortcuts import get_object_or_404
 
 # UPDATED: Import UserProfile instead of userdetails
-from .models import UserProfile, studentcourse
+from .models import UserProfile, studentcourse, GeneratedQuiz, Question, Answer
 
 
 # Create your views here.
@@ -143,3 +145,75 @@ def logout_view(request):
     auth_logout(request)
     messages.success(request, "You have been logged out successfully.")
     return redirect('login')
+
+
+@login_required
+def start_ai_quiz(request, course_id):
+    course = get_object_or_404(studentcourse, pk=course_id, student=request.user)
+    
+    # --- ADAPTIVE DIFFICULTY LOGIC ---
+    last_quiz = GeneratedQuiz.objects.filter(course=course).order_by('-created_at').first()
+    difficulty = 'Basic' # Default for the first quiz
+    if last_quiz:
+        if last_quiz.score is not None and last_quiz.score >= 75:
+            # If the user scored well, increase the difficulty
+            difficulty_levels = ['Basic', 'Intermediate', 'Advanced']
+            current_index = difficulty_levels.index(last_quiz.difficulty)
+            if current_index < len(difficulty_levels) - 1:
+                difficulty = difficulty_levels[current_index + 1] # Go to next level
+            else:
+                difficulty = 'Advanced' # Stay at max level
+        else:
+            # Otherwise, keep the same difficulty
+            difficulty = last_quiz.difficulty
+
+    # --- GENERATE QUIZ AND SAVE TO DB ---
+    quiz_questions = generate_quiz_from_ai(course.course_name, difficulty)
+    
+    if not quiz_questions:
+        messages.error(request, "Sorry, the AI could not generate a quiz at this moment. Please try again later.")
+        return redirect('userdashboard')
+
+    # Create the main quiz record
+    new_quiz = GeneratedQuiz.objects.create(student=request.user, course=course, difficulty=difficulty)
+    
+    # Save the questions and answers from the AI to our database
+    for q_data in quiz_questions:
+        question = Question.objects.create(quiz=new_quiz, text=q_data['text'])
+        for i, ans_text in enumerate(q_data['answers']):
+            Answer.objects.create(
+                question=question,
+                text=ans_text,
+                is_correct=(i == q_data['correct_answer_index'])
+            )
+            
+    return redirect('take_ai_quiz', quiz_id=new_quiz.id)
+
+
+@login_required
+def take_ai_quiz(request, quiz_id):
+    quiz = get_object_or_404(GeneratedQuiz, pk=quiz_id, student=request.user)
+
+    if request.method == 'POST':
+        total_questions = quiz.questions.count()
+        correct_answers = 0
+        for question in quiz.questions.all():
+            selected_answer_id = request.POST.get(f'question_{question.id}')
+            if selected_answer_id:
+                correct_answer = question.answers.get(is_correct=True)
+                if int(selected_answer_id) == correct_answer.id:
+                    correct_answers += 1
+        
+        score = (correct_answers / total_questions) * 100 if total_questions > 0 else 0
+        
+        # Update the quiz record with the score and mark as completed
+        quiz.score = score
+        quiz.is_completed = True
+        quiz.save()
+        
+        messages.success(request, f"Quiz submitted! Your score is {score:.0f}%.")
+        return redirect('userdashboard')
+
+    context = {'quiz': quiz}
+    # We can reuse the same quiz template structure
+    return render(request, 'quiz.html', context)

@@ -112,7 +112,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
+
+CELERY_TIMEZONE = TIME_ZONE
 
 USE_I18N = True
 
@@ -140,10 +142,11 @@ CELERY_RESULT_SERIALIZER = 'json'
 
 from celery.schedules import crontab
 
+# === CELERY_BEAT_SCHEDULE UPDATED HERE ===
 CELERY_BEAT_SCHEDULE = {
     'send-morning-notification': {
         'task': 'ui.tasks.send_daily_reminders',
-        'schedule': crontab(hour=8, minute=0), # 8:00 AM
+        'schedule': crontab(hour=2, minute=21), # 8:00 AM
     },
     'send-afternoon-notification': {
         'task': 'ui.tasks.send_daily_reminders',
@@ -153,12 +156,19 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'ui.tasks.send_daily_reminders',
         'schedule': crontab(hour=20, minute=0), # 8:00 PM
     },
-    'send-quiz-reminders': {
-        'task': 'ui.tasks.send_quiz_reminders',
-        'schedule': crontab(hour=10, minute=0), # Every day at 10 AM
+    'send-ai-quiz-reminders': {
+        'task': 'ui.tasks.send_ai_quiz_reminders',
+        'schedule': crontab(hour=2, minute=21), # Every day at 9:30 AM
     },
 }
 
-# --- NEWLY ADDED ---
 # Securely load the API Key
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+
+# --- NEWLY ADDED EMAIL CONFIGURATION ---
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'nta.official.2022@gmail.com'  # <-- Replace with your full Gmail address
+EMAIL_HOST_PASSWORD = 'ucie ozpn crhe btrs' # <-- Replace with your Google App Password

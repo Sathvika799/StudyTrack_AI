@@ -27,4 +27,6 @@ urlpatterns = [
     path("userdashboard/", views.userdashboard, name="userdashboard"),
     path("admindashboard/", views.admindashboard, name="admindashboard"),
     path('logout/', views.logout_view, name='logout'),
+    path('course/<int:course_id>/start-quiz/', views.start_ai_quiz, name='start_ai_quiz'),
+    path('quiz/attempt/<int:quiz_id>/', views.take_ai_quiz, name='take_ai_quiz'),
 ]

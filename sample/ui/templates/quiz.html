@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Generated Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; } </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-8">
+    <div class="bg-white p-8 md:p-10 rounded-2xl shadow-lg w-full max-w-3xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Quiz for {{ quiz.course.course_name }}</h1>
+        <p class="text-gray-600 mb-8">Difficulty: {{ quiz.difficulty }}</p>
+        
+        <form method="POST" action="{% url 'take_ai_quiz' quiz.id %}">
+            {% csrf_token %}
+            <div class="space-y-8">
+                {% for question in quiz.questions.all %}
+                <div class="question-block">
+                    <p class="text-lg font-semibold text-gray-700 mb-4">{{ forloop.counter }}. {{ question.text }}</p>
+                    <div class="space-y-3 pl-4">
+                        {% for answer in question.answers.all %}
+                        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <input type="radio" name="question_{{ question.id }}" value="{{ answer.id }}" class="mr-3 h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" required>
+                            <span class="text-gray-800">{{ answer.text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500">Sorry, no questions were generated for this quiz.</p>
+                {% endfor %}
+            </div>
+            <div class="mt-10">
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-200">Submit Quiz</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
