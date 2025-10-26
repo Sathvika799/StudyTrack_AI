@@ -29,3 +29,16 @@ class studentcourse(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.course_name}"
+    
+class Quiz(models.Model):
+    course = models.ForeignKey(studentcourse, on_delete=models.CASCADE, related_name='quizzes')
+    title = models.CharField(max_length=200)
+    due_date = models.DateTimeField()
+    completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.title} for {self.course.course_name}"
+
+    def is_due_soon(self):
+        # Returns true if the quiz is due within the next 2 days
+        return timezone.now() <= self.due_date <= timezone.now() + timezone.timedelta(days=2)

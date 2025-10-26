@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv # Import dotenv
+load_dotenv() # Load environment variables from .env file
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -105,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
+# https://docs.djangoproject.com/en/5.2/topics/i1n/
 
 LANGUAGE_CODE = "en-us"
 
@@ -125,3 +128,37 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'send-morning-notification': {
+        'task': 'ui.tasks.send_daily_reminders',
+        'schedule': crontab(hour=8, minute=0), # 8:00 AM
+    },
+    'send-afternoon-notification': {
+        'task': 'ui.tasks.send_daily_reminders',
+        'schedule': crontab(hour=14, minute=0), # 2:00 PM
+    },
+    'send-evening-notification': {
+        'task': 'ui.tasks.send_daily_reminders',
+        'schedule': crontab(hour=20, minute=0), # 8:00 PM
+    },
+    'send-quiz-reminders': {
+        'task': 'ui.tasks.send_quiz_reminders',
+        'schedule': crontab(hour=10, minute=0), # Every day at 10 AM
+    },
+}
+
+# --- NEWLY ADDED ---
+# Securely load the API Key
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

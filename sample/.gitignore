@@ -1,0 +1,17 @@
+# Secrets
+.env
+
+# Database files
+db.sqlite3
+dump.rdb
+
+# Celery files
+celerybeat-schedule
+celerybeat-schedule.db
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Virtual Environment (if it were inside the project)
+/myenv/

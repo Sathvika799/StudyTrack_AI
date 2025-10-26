@@ -93,6 +93,19 @@ def userdashboard(request):
         'ongoing_courses': ongoing_courses,
         'completed_courses': completed_courses,
     }
+
+    # Find a course with >= 75% completion that is not yet finished for the alert
+    high_priority_course = studentcourse.objects.filter(
+        student=request.user,
+        completion_percentage__gte=75
+    ).exclude(status='Completed').first()
+
+    context = {
+        'profile': profile,
+        'ongoing_courses': ongoing_courses,
+        'completed_courses': completed_courses,
+        'high_priority_course': high_priority_course, # Add this to the context
+    }
     return render(request, 'userdashboard.html', context)
 
 @login_required
